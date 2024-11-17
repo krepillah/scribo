@@ -1,0 +1,118 @@
+/users
+  /{uid}
+    - email: "user@example.com"
+    - first_name: "Имя"
+    - last_name: "Фамилия"
+    - created_at: Timestamp
+    /profiles
+      /{profileId}
+        - profile_name: "Жена"
+        - created_at: Timestamp
+        - additional_data: "Данные профиля"
+        /subscriptions
+          /{subscriptionId}
+            - name: "Netflix"
+            - image_url: "https://example.com/netflix-logo.png"
+            - price: 9.99
+            - currency: "USD"
+            - expiration_date: Timestamp (Дата окончания подписки)
+            - status: "active" (или "inactive", "expired" и т.д.)
+            - created_at: Timestamp
+          /{subscriptionId}
+            - name: "Spotify"
+            - image_url: "https://example.com/spotify-logo.png"
+            - price: 4.99
+            - currency: "USD"
+            - expiration_date: Timestamp
+            - status: "active"
+            - created_at: Timestamp
+      /{profileId}
+        - profile_name: "Сын"
+        - created_at: Timestamp
+        - additional_data: "Данные профиля"
+        /subscriptions
+          /{subscriptionId}
+            - name: "Disney+"
+            - image_url: "https://example.com/disneyplus-logo.png"
+            - price: 7.99
+            - currency: "USD"
+            - expiration_date: Timestamp
+            - status: "active"
+            - created_at: Timestamp
+
+
+
+Детали структуры:
+Основной документ пользователя (/users/{uid}):
+
+Все те же данные, что и в предыдущем примере: email, имя, фамилия и т. д.
+Коллекция profiles внутри документа пользователя:
+
+Содержит информацию о каждом профиле пользователя, например, имя профиля и дополнительные данные.
+Коллекция subscriptions внутри каждого профиля:
+
+Каждая подписка будет отдельным документом в подколлекции subscriptions для каждого профиля.
+В каждом документе подписки будет храниться информация о названии подписки, изображении, цене, дате окончания и статусе подписки (например, активная или истекшая).
+Дополнительно можно хранить дату создания подписки и любые другие атрибуты, которые могут быть полезны.
+
+
+Добавление новой подписки в профиль:
+
+const profileId = 'profileId'; // ID профиля
+const uid = 'userUid'; // UID пользователя
+
+const subscriptionData = {
+    name: 'Netflix',
+    image_url: 'https://example.com/netflix-logo.png',
+    price: 9.99,
+    currency: 'USD',
+    expiration_date: firebase.firestore.Timestamp.fromDate(new Date('2024-12-31')), // Пример даты окончания
+    status: 'active',
+    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+};
+
+await firestore.collection('users').doc(uid)
+    .collection('profiles').doc(profileId)
+    .collection('subscriptions').add(subscriptionData);
+
+
+Получение всех подписок для профиля:
+
+const profileId = 'profileId'; // ID профиля
+const uid = 'userUid'; // UID пользователя
+
+const subscriptionsRef = firestore.collection('users').doc(uid)
+    .collection('profiles').doc(profileId)
+    .collection('subscriptions');
+
+const snapshot = await subscriptionsRef.get();
+snapshot.forEach(doc => {
+    console.log(doc.id, '=>', doc.data());
+});
+
+
+Обновление подписки (например, изменение статуса):
+
+const profileId = 'profileId';
+const uid = 'userUid';
+const subscriptionId = 'subscriptionId'; // ID подписки, которую нужно обновить
+
+await firestore.collection('users').doc(uid)
+    .collection('profiles').doc(profileId)
+    .collection('subscriptions').doc(subscriptionId)
+    .update({
+        status: 'expired',
+        expiration_date: firebase.firestore.Timestamp.fromDate(new Date('2024-01-01')),
+    });
+
+
+Удаление подписки:
+
+const profileId = 'profileId';
+const uid = 'userUid';
+const subscriptionId = 'subscriptionId'; // ID подписки, которую нужно удалить
+
+await firestore.collection('users').doc(uid)
+    .collection('profiles').doc(profileId)
+    .collection('subscriptions').doc(subscriptionId)
+    .delete();
